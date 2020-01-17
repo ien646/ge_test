@@ -12,19 +12,24 @@ std::vector<size_t> crossFilter::getFilteredRows(const std::vector<csvColumn>& c
 {
     std::unordered_set<size_t> failedIndexes;
     size_t totalCols = 0;
-    for(auto& filterInstance : _filters)
+
+    for(size_t colIdx = 0; colIdx < cols.size(); ++colIdx)
     {
-        for(auto& targetCol : filterInstance.targetColumns)
+        if(std::holds_alternative<numericColumn>(cols[colIdx]))
         {
-            if(std::holds_alternative<numericColumn>(cols[targetCol]))
+            auto col = std::get<numericColumn>(cols[colIdx]);
+            totalCols = col.size();
+            for(auto& filterInst : _filters)
             {
-                auto& column = std::get<numericColumn>(cols[targetCol]);
-                totalCols = column.cells.size();
-                for(size_t i = 0; i < column.cells.size(); ++i)
+                if(std::count(filterInst.targetColumns.begin(), filterInst.targetColumns.end(), colIdx))
                 {
-                    if(!filterInstance.filter->passesFilter(column.cells[i]))
+                    for(size_t cellIdx = 0; cellIdx < col.cells.size(); ++cellIdx)
                     {
-                        failedIndexes.emplace(i);
+                        if(failedIndexes.count(cellIdx)) { continue; }
+                        if(!filterInst.filter->passesFilter(col.cells[cellIdx]))
+                        {
+                            failedIndexes.emplace(cellIdx);
+                        }
                     }
                 }
             }
