@@ -18,12 +18,17 @@ int main(int argc, char** argv)
     crossFilter cross;
 
     filterInstance filter0;
-    filter0.targetColumns = { 3, 7 };
+    filter0.targetColumns = { 3 };
     filter0.filter = std::make_unique<crossFilterRange<double>>(1000, 2000);
 
     cross.addFilter(std::move(filter0));
 
     auto filteredCols = cross.getFilteredRows(cols);
+
+    for(auto& idx : filteredCols)
+    {
+        std::cout << idx << std::endl;
+    }
 
     return 0;
 }

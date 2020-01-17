@@ -10,7 +10,8 @@ void crossFilter::addFilter(filterInstance&& inst)
 
 std::vector<size_t> crossFilter::getFilteredRows(const std::vector<csvColumn>& cols)
 {
-    std::unordered_set<size_t> result;
+    std::unordered_set<size_t> failedIndexes;
+    size_t totalCols = 0;
     for(auto& filterInstance : _filters)
     {
         for(auto& targetCol : filterInstance.targetColumns)
@@ -18,15 +19,12 @@ std::vector<size_t> crossFilter::getFilteredRows(const std::vector<csvColumn>& c
             if(std::holds_alternative<numericColumn>(cols[targetCol]))
             {
                 auto& column = std::get<numericColumn>(cols[targetCol]);
+                totalCols = column.cells.size();
                 for(size_t i = 0; i < column.cells.size(); ++i)
                 {
-                    if(filterInstance.filter->passesFilter(column.cells[i]))
+                    if(!filterInstance.filter->passesFilter(column.cells[i]))
                     {
-                        result.emplace(i);
-                    }
-                    else
-                    {
-                        result.erase(i);
+                        failedIndexes.emplace(i);
                     }
                 }
             }
@@ -34,9 +32,12 @@ std::vector<size_t> crossFilter::getFilteredRows(const std::vector<csvColumn>& c
     }
     
     std::vector<size_t> vecResult;
-    vecResult.reserve(result.size());
-
-    std::copy(result.begin(), result.end(), std::back_inserter(vecResult));
-    std::sort(vecResult.begin(), vecResult.end());
+    for(size_t i = 0; i < totalCols; ++i)
+    {
+        if(!failedIndexes.count(i))
+        {
+            vecResult.push_back(i);
+        }
+    }
     return vecResult;
 }
